@@ -9,10 +9,14 @@ on:
       - 'master'
       - 'staging'
       - 'trying'
+      - 'near-main'
     tags:
       # this is _not_ a regex, see: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
       - '[0-9]+.[0-9]+.[0-9]+*'
   pull_request:
+    branches:
+      - 'near-main'
+      - 'master'
 jobs:
   setup:
     name: Set up
@@ -94,7 +98,7 @@ jobs:
     container: ${{ matrix.container }}
     env:
       CARGO_SCCACHE_VERSION: 0.2.14-alpha.0-parity
-      SCCACHE_AZURE_BLOB_CONTAINER: wasmerstoragesccacheblob
+      SCCACHE_AZURE_BLOB_CONTAINER: nearwasmersccacheblob
       SCCACHE_AZURE_CONNECTION_STRING: ${{ secrets.SCCACHE_AZURE_CONNECTION_STRING }}
       TARGET: ${{ matrix.target }}
     steps:
@@ -108,7 +112,7 @@ jobs:
       - name: Set up base deps on musl
         if: matrix.build == 'linux-musl-x64'
         run: |
-            apk add build-base musl-dev curl make libtool libffi-dev gcc automake autoconf git openssl-dev g++
+          apk add build-base musl-dev curl make libtool libffi-dev gcc automake autoconf git openssl-dev g++
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -162,7 +166,7 @@ jobs:
         if: matrix.use_sccache
         run: |
           if [ ! -f '${{ runner.tool_cache }}/cargo-sccache/bin/sccache' ]; then
-            cargo install sccache --git https://github.com/wasmerio/sccache.git --no-default-features --features=dist-client,azure --root '${{ runner.tool_cache }}/cargo-sccache'
+            cargo install sccache --git https://github.com/ailisp/sccache.git --no-default-features --features=dist-client,azure --root '${{ runner.tool_cache }}/cargo-sccache'
           fi
         shell: bash
       - name: Setup Rust target
@@ -224,7 +228,7 @@ jobs:
           toolchain: 'nightly-2021-04-25'
           target: ${{ matrix.target }}
           override: true
-          components: "rust-src"
+          components: 'rust-src'
         if: needs.setup.outputs.DOING_RELEASE == '1'
       - name: Build Minimal Wasmer Headless
         if: needs.setup.outputs.DOING_RELEASE == '1' && matrix.build != 'linux-musl-x64'
@@ -344,7 +348,7 @@ jobs:
           OUTPUT=$(./wasmer run artifacts/cross_compiled_from_linux/qjs_mac_from_linux.wjit -- --eval "function greet(name) { return JSON.stringify('Hello, ' + name); }; print(greet('World'));")
           [[ "$OUTPUT" == '"Hello, World"' ]]
           #wasmer run artifacts/cross/cross_compiled_from_win/qjs_mac_from_win.wjit -- --eval "function greet(name) { return JSON.stringify('Hello, ' + name); }; print(greet('World'));"
-          
+
   #test-cross-compile-on-win:
   #  needs: [setup, test]
   #  runs-on: windows-latest
