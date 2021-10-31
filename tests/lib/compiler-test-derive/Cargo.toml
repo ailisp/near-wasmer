@@ -21,4 +21,4 @@ syn =  { version = "1.*", features = ["full"] }
 
 [dev-dependencies]
 pretty_assertions = "0.6.1"
-trybuild = "1.0.11"
+trybuild = "1.0.52"
